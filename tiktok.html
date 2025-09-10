@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Recharge — Demo UI</title>
+<style>
+  :root{
+    --bg:#ffffff;
+    --muted:#6b7280;
+    --text:#111827;
+    --card:#ffffff;
+    --border:#e5e7eb;
+    --primary:#e53935;
+    --accent:#a9a6f8;
+    --coin:#f4c542;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial, Helvetica, sans-serif;background:var(--bg);color:var(--text)}
+  .phone{width:420px;max-width:100%;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+  .content{padding:16px;flex:1}
+  h2{margin:6px 0 10px;font-size:18px}
+  .hint{font-size:12px;color:#e91e63;margin-bottom:10px}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .pack{background:#fff;border-radius:10px;padding:12px;text-align:center;cursor:pointer;border:1px solid #e0e0e8;user-select:none;box-shadow:0 2px 6px rgba(20,20,60,.04)}
+  .pack .coins{font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px}
+  .coin{width:18px;height:18px;display:inline-block;vertical-align:middle;}
+  .pack .usd{font-size:12px;color:#777;margin-top:6px}
+  .pack.selected{border-color:var(--accent);box-shadow:0 0 8px rgba(60,60,120,.2)}
+  .pay-strip{margin-top:14px;font-weight:700;font-size:14px;color:var(--muted)}
+  .brands{display:flex;gap:10px;align-items:center;margin:12px 0}
+  .brand{width:44px;height:28px;border-radius:6px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center}
+  .visa{color:#1434cb;font-weight:900;font-style:italic}
+  .mc{display:flex;gap:2px}
+  .mc i{width:12px;height:12px;border-radius:50%;display:inline-block}
+  .mc i:nth-child(1){background:#eb001b}
+  .mc i:nth-child(2){background:#f79e1b;margin-left:-3px}
+  .pp{font-weight:900;color:#003087}
+  .paybar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--border);padding:10px 16px}
+  .paybtn{width:100%;background:var(--primary);color:#fff;padding:14px;border-radius:12px;border:none;font-weight:800;font-size:16px;cursor:pointer}
+  .paybtn:disabled{opacity:.5;cursor:not-allowed}
+  .pay-total{margin-bottom:8px;display:flex;justify-content:space-between;color:var(--muted)}
+  .overlay{position:fixed;inset:0;background:#fff;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:50}
+  .overlay.show{display:flex}
+  .check{font-size:60px;color:#4caf50;margin-bottom:12px}
+  .overlay h3{margin:0;font-size:20px}
+  .overlay button{margin-top:20px;padding:12px 20px;font-size:14px;border:none;border-radius:8px;background:var(--primary);color:#fff;cursor:pointer}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:40}
+  .modal.show{display:flex}
+  .sheet{background:#fff;border-radius:12px;padding:16px;width:320px;text-align:center}
+  .sheet h3{margin:0 0 12px;font-size:16px}
+  .sheet input{width:100%;padding:10px;font-size:18px;text-align:center;border:1px solid #ccc;border-radius:8px;margin-bottom:12px}
+  .keyboard{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .keyboard button{padding:14px;font-size:16px;border:none;border-radius:8px;background:#f2f2f2;cursor:pointer}
+  .keyboard button:active{background:#ddd}
+  .sheet .close{margin-top:12px;padding:10px 20px;font-size:14px;border:none;border-radius:8px;background:var(--primary);color:#fff;cursor:pointer}
+  .os-back{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:60}
+  .os-back.show{display:flex}
+  .os{background:#fff;border-top-left-radius:12px;border-top-right-radius:12px;width:100%;max-width:420px;max-height:86vh;overflow:auto}
+  .os .head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+  .os .title{font-weight:700}
+  .os .body{padding:12px 16px 90px}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+  .row:last-child{border-bottom:0}
+  .label{color:var(--muted)}
+  .pm-title{margin-top:10px;margin-bottom:6px;color:var(--muted);font-size:12px}
+  .pm{display:flex;flex-direction:column;gap:8px}
+  .pm-item{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:10px}
+  .pm-item .bullet{margin-left:auto;width:18px;height:18px;border:2px solid #ff6b7f;border-radius:50%}
+  .pm-item .brand{width:44px;height:28px;border-radius:6px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center}
+  .pm-footnote{display:none}
+  .os-foot{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--border);padding:10px 16px}
+  .spinner{width:18px;height:18px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;margin-right:8px;display:none}
+  .paying .spinner{display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .wm{position:fixed;right:8px;bottom:8px;font-size:10px;color:#9aa0a6;user-select:none}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="content">
+    <h2>Recharge</h2>
+    <div class="hint">Save up to 31% compared to in‑app purchase</div>
+
+    <div style="margin-bottom:12px">
+      <input type="text" id="userNick" placeholder="Enter nickname" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px;">
+    </div>
+
+    <div class="grid" id="packs">
+      <div class="pack" data-coins="70" data-usd="0.74"><div class="coins"><img class="coin" src="https://cdn3d.iconscout.com/3d/free/thumb/free-tiktok-coin-with-blink-star-3d-icon-download-in-png-blend-fbx-gltf-file-formats--brand-name-social-media-symbol-pack-logos-icons-6220600.png" alt="coin">70</div><div class="usd">US$ 0.74</div></div>
+      <div class="pack" data-coins="450" data-usd="4.77"><div class="coins"><img class="coin" src="https://cdn3d.iconscout.com/3d/free/thumb/free-tiktok-coin-with-blink-star-3d-icon-download-in-png-blend-fbx-gltf-file-formats--brand-name-social-media-symbol-pack-logos-icons-6220600.png" alt="coin">450</div><div class="usd">US$ 4.77</div></div>
+      <div class="pack" data-coins="550" data-usd="6.18"><div class="coins"><img class="coin" src="https://cdn3d.iconscout.com/3d/free/thumb/free-tiktok-coin-with-blink-star-3d-icon-download-in-png-blend-fbx-gltf-file-formats--brand-name-social-media-symbol-pack-logos-icons-6220600.png" alt="coin">550</div><div class="usd">US$ 6.18</div></div>
+      <div class="pack" data-coins="750" data-usd="7.95"><div class="coins"><img class="coin" src="https://cdn3d.iconscout.com/3d/free/thumb/free-tiktok-coin-with-blink-star-3d-icon-download-in-png-blend-fbx-gltf-file-formats--brand-name-social-media-symbol-pack-logos-icons-6220600.png" alt="coin">750</div><div class="usd">US$ 7.95</div></div>
+      <div class="pack" data-coins="1000" data-usd="10.60"><div class="coins"><img class="coin" src="https://cdn3d.iconscout.com/3d/free/thumb/free-tiktok-coin-with-blink-star-3d-icon-download-in-png-blend-fbx-gltf-file-formats--brand-name-social-media-symbol-pack-logos-icons-6220600.png" alt="coin">1,000</div><div class="usd">US$ 10.60</div></div>
+      <div class="pack" data-coins="2000" data-usd="21.29"><div class="coins"><img class="coin" src="https://cdn3d.iconscout.com/3d/free/thumb/free-tiktok-coin-with-blink-star-3d-icon-download-in-png-blend-fbx-gltf-file-formats--brand-name-social-media-symbol-pack-logos-icons-6220600.png" alt="coin">2,000</div><div class="usd">US$ 21.29</div></div>
+      <div class="pack" data-coins="2500" data-usd="27.08"><div class="coins"><img class="coin" src="https://cdn3d.iconscout.com/3d/free/thumb/free-tiktok-coin-with-blink-star-3d-icon-download-in-png-blend-fbx-gltf-file-formats--brand-name-social-media-symbol-pack-logos-icons-6220600.png" alt="coin">2,500</div><div class="usd">US$ 27.08</div></div>
+      <div class="pack custom" id="customPack"><div class="coins"><img class="coin" src="https://cdn3d.iconscout.com/3d/free/thumb/free-tiktok-coin-with-blink-star-3d-icon-download-in-png-blend-fbx-gltf-file-formats--brand-name-social-media-symbol-pack-logos-icons-6220600.png" alt="coin">Custom</div><div class="usd">—</div></div>
+    </div>
+
+    <div class="pay-strip">
+      Total: <strong id="total">US$ 0.00</strong>
+    </div>
+    <div style="margin-top:4px;font-size:14px;color:var(--muted)" id="totalCoins">0 Coins</div>
+
+    <div class="brands">
+      <div class="brand visa">VISA</div>
+      <div class="brand mc"><i></i><i></i></div>
+      <div class="brand pp">PayPal</div>
+    </div>
+  </div>
+
+  <div class="paybar">
+    <div class="pay-total"><span>Pay now</span><span id="barTotal">US$ 0.00</span></div>
+    <button class="paybtn" id="rechargeBtn" disabled>Recharge</button>
+  </div>
+</div>
+
+<div class="overlay" id="done">
+  <div class="check">✔</div>
+  <h3>Payment Completed</h3>
+  <button id="backBtn">Go back</button>
+</div>
+
+<div class="modal" id="customModal">
+  <div class="sheet">
+    <h3>Custom Coins</h3>
+    <input type="text" id="customInput" readonly placeholder="0">
+    <div class="keyboard">
+      <button>1</button><button>2</button><button>3</button>
+      <button>4</button><button>5</button><button>6</button>
+      <button>7</button><button>8</button><button>9</button>
+      <button>0</button><button>000</button><button>⌫</button>
+    </div>
+    <button class="close" id="applyCustom">Apply</button>
+  </div>
+</div>
+
+<div class="os-back" id="osBack">
+  <div class="os">
+    <div class="head">
+      <div class="title">Order summary</div>
+      <div style="opacity:.6">⚙️</div>
+    </div>
+    <div class="body">
+      <div class="row"><div class="label">Nickname</div><div id="osAcc"></div></div>
+      <div class="row"><div id="osCoins">2004 Coins</div><div id="osPrice" style="font-weight:700">$ 27.08</div></div>
+      <div class="pm-title">Select a payment method</div>
+      <div class="pm">
+        <div class="pm-item">
+          <div class="brand visa">VISA</div>
+          <div style="font-size:14px">**** **** **** 1862</div>
+          <div class="bullet" style="background:#ff6b7f;border:none;"></div>
+        </div>
+        <div class="pm-item">
+          <div class="brand"></div>
+          <div>Apple Pay</div>
+          <div class="bullet"></div>
+        </div>
+        <div class="pm-item">
+          <div class="brand pp">PayPal</div>
+          <div>PayPal</div>
+          <div class="bullet"></div>
+        </div>
+        <div class="pm-item">
+          <div class="brand">V</div>
+          <div>Venmo</div>
+          <div class="bullet"></div>
+        </div>
+      </div>
+    </div>
+    <div class="os-foot">
+      <div class="pay-total"><span>Total</span><span id="osTotal">$ 0.00</span></div>
+      <button class="paybtn" id="payNowBtn"><span class="spinner" id="spin"></span><span id="payText">Pay now</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="wm">demo ui</div>
+
+<script>
+(function(){
+  const RATE = 0.01352; 
+  const total = document.getElementById('total');
+  const barTotal = document.getElementById('barTotal');
+  const totalCoins = document.getElementById('totalCoins');
+  const rechargeBtn = document.getElementById('rechargeBtn');
+  const packs = document.querySelectorAll('.pack');
+  const customModal = document.getElementById('customModal');
+  const customInput = document.getElementById('customInput');
+  const applyCustom = document.getElementById('applyCustom');
+  const osBack = document.getElementById('osBack');
+  const osAcc = document.getElementById('osAcc');
+  const osCoins = document.getElementById('osCoins');
+  const osPrice = document.getElementById('osPrice');
+  const osTotal = document.getElementById('osTotal');
+  const payNowBtn = document.getElementById('payNowBtn');
+  const spin = document.getElementById('spin');
+  const payText = document.getElementById('payText');
+  const done = document.getElementById('done');
+  const backBtn = document.getElementById('backBtn');
+  const userNick = document.getElementById('userNick');
+
+  let sel = null; 
+
+  function setTotals(usd, coins){
+    const v = usd ? `US$ ${Number(usd).toFixed(2)}` : 'US$ 0.00';
+    total.textContent = v;
+    barTotal.textContent = v;
+    totalCoins.textContent = coins ? coins.toLocaleString() + ' Coins' : '0 Coins';
+    rechargeBtn.disabled = !usd;
+  }
+
+  packs.forEach(p=>{
+    p.addEventListener('click',()=>{
+      if(p.classList.contains('custom')){
+        customModal.classList.add('show');
+        return;
+      }
+      packs.forEach(x=>x.classList.remove('selected'));
+      p.classList.add('selected');
+      sel = {coins: parseInt(p.dataset.coins,10), usd: parseFloat(p.dataset.usd)};
+      setTotals(sel.usd, sel.coins);
+    });
+  });
+
+  document.querySelectorAll('.keyboard button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      if(b.textContent==='⌫'){
+        customInput.value = customInput.value.slice(0,-1);
+      }else{
+        customInput.value += b.textContent;
+      }
+    });
+  });
+
+  applyCustom.addEventListener('click',()=>{
+    const coins = parseInt(customInput.value||'0',10);
+    if(!coins || coins<=0){ alert('Введите корректное число'); return; }
+    const usd = +(coins * RATE).toFixed(2);
+    packs.forEach(x=>x.classList.remove('selected'));
+    sel = {coins, usd};
+    setTotals(usd, coins);
+    customInput.value='';
+    customModal.classList.remove('show');
+  });
+
+  rechargeBtn.addEventListener('click',()=>{
+    osAcc.textContent = userNick.value || '';
+    osCoins.textContent = sel.coins.toLocaleString() + ' Coins';
+    osPrice.textContent = '$ ' + sel.usd.toFixed(2);
+    osTotal.textContent = '$ ' + sel.usd.toFixed(2);
+    osBack.classList.add('show');
+  });
+
+  payNowBtn.addEventListener('click',()=>{
+    payNowBtn.classList.add('paying');
+    payNowBtn.disabled = true;
+    payText.textContent = 'Processing…';
+    setTimeout(()=>{
+      osBack.classList.remove('show');
+      payNowBtn.classList.remove('paying');
+      payNowBtn.disabled = false;
+      payText.textContent = 'Pay now';
+      done.classList.add('show');
+    }, 1800);
+  });
+
+  backBtn.addEventListener('click',()=>{
+    done.classList.remove('show');
+  });
+
+  setTotals(0, 0);
+})();
+</script>
+</body>
+</html>
